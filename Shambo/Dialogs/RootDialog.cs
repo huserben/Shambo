@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
 using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Bot.Builder.ConnectorEx;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.FormFlow;
-using Microsoft.Bot.Connector;
+using Microsoft.Bot.Builder.Luis;
+using Microsoft.Bot.Builder.Luis.Models;
 using Newtonsoft.Json;
 using Shambo.Dialogs.BuildInfo;
 using Shambo.Helpers;
@@ -13,9 +17,15 @@ using Shambo.Model;
 namespace Shambo.Dialogs
 {
    [Serializable]
-   public class RootDialog : IDialog<object>
+   public class RootDialog : LuisDialog<object>
    {
-      public async Task StartAsync(IDialogContext context)
+      public RootDialog() : base(new LuisService(new LuisModelAttribute(
+         ConfigurationManager.AppSettings["LuisAppId"],
+         ConfigurationManager.AppSettings["LuisAPIKey"])))
+      {
+      }
+
+      public override async Task StartAsync(IDialogContext context)
       {
          if (!context.UserData.TryGetValue<bool>("hasUsedToolBefore", out _))
          {
@@ -80,41 +90,85 @@ namespace Shambo.Dialogs
       {
          await context.PostAsync($"Hi how can I be of service?");
 
-         context.Wait(ConversationStarted);
+         //context.Wait(ConversationStarted);
+         context.Wait(MessageReceived);
       }
 
-      private async Task ConversationStarted(IDialogContext context, IAwaitable<object> incomingActivity)
+      [LuisIntent("None")]
+      private async Task AfterUnknownMessageReceived(IDialogContext context, LuisResult result)
       {
-         var activity = (Activity)await incomingActivity;
+         await context.PostAsync("Sorry, I don't understand what you mean. Wanna try again?");
+         context.Wait(MessageReceived);
+      }
 
-         /* Handle with LUIS */
-         switch (activity.Text.ToLower())
+      [LuisIntent("Help")]
+      private Task AfterHelpMessageReceived(IDialogContext context, LuisResult result)
+      {
+         context.Call(new HelpDialog(), AfterHelpDialog);
+
+         return Task.CompletedTask;
+      }
+
+      [LuisIntent("Build.CheckStatus")]
+      private Task AfterCheckBuildStateMessageReceived(IDialogContext context, LuisResult result)
+      {
+         var buildName = string.Empty;
+         var buildState = string.Empty;
+         var numberOfBuilds = 1;
+
+         if (result.TryFindEntity("BuildName", out var buildNameEntity))
          {
-            case "modfiy connection":
-               context.Call(FormDialog.FromForm(ConnectionDetails.BuildForm), AfterConnectionSetup);
-               break;
-            case "add subscription":
-               context.Call(FormDialog.FromForm(Subscription.BuildForm), AfterSubscriptionSetup);
-               break;
-            case "remove subscription":
-               /*TODO*/
-               break;
-            case "check build state":
-               context.Call(new CheckBuildInfoDialog(Conversation.Container.GetDataService().GetConnectionDetails()), AfterHelpDialog);
-               break;
-            case "reset":
-               context.Call(new ResetUserDataDialog(), AfterResetUserData);
-               break;
-            case "help":
-            default:
-               context.Call(new HelpDialog(), AfterHelpDialog);
-               break;
+            buildName = buildNameEntity.Entity;
+            /*Todo: handle "any" etc.*/
          }
+
+         if (result.TryFindEntity("BuildState", out var buildStateEntity))
+         {
+            var values = (List<object>)buildStateEntity.Resolution["values"];
+            buildState = values.Single().ToString();
+         }
+
+         if (result.TryFindEntity("builtin.number", out var numberEntity))
+         {
+            int.TryParse(numberEntity.Entity, out numberOfBuilds);
+         }
+
+         context.Call(new CheckBuildInfoDialog(
+            Conversation.Container.GetDataService().GetConnectionDetails(),
+            buildName,
+            buildState,
+            numberOfBuilds),
+            AfterHelpDialog);
+         return Task.CompletedTask;
+      }
+
+      /*TODO: Add intent*/
+      [LuisIntent("Reset")]
+      private Task AfterResetMessageReceived(IDialogContext context, LuisResult result)
+      {
+         context.Call(new ResetUserDataDialog(), AfterResetUserData);
+         return Task.CompletedTask;
+      }
+
+      /*TODO: Add intent*/
+      [LuisIntent("Connection.Modify")]
+      private Task AfterModifyConnectionMessageReceived(IDialogContext context, LuisResult result)
+      {
+         context.Call(FormDialog.FromForm(ConnectionDetails.BuildForm), AfterConnectionSetup);
+         return Task.CompletedTask;
+      }
+
+      /*TODO: Add intent*/
+      [LuisIntent("Subscription.Add")]
+      private Task AfterAddSubscriptionMessageReceived(IDialogContext context, LuisResult result)
+      {
+         context.Call(FormDialog.FromForm(Subscription.BuildForm), AfterSubscriptionSetup);
+         return Task.CompletedTask;
       }
 
       private Task AfterHelpDialog(IDialogContext context, IAwaitable<object> result)
       {
-         context.Wait(ConversationStarted);
+         context.Wait(MessageReceived);
          return Task.CompletedTask;
       }
 

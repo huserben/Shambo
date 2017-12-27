@@ -212,7 +212,7 @@
     <Compile Include="Controllers\MessagesController.cs" />
     <Compile Include="Dialogs\BuildInfo\BuildInfoDialog.cs" />
     <Compile Include="Dialogs\BuildInfo\CheckBuildInfoDialog.cs" />
-    <Compile Include="Dialogs\BuildInfo\ShowLatestStatusDialog.cs" />
+    <Compile Include="Dialogs\BuildInfo\ShowBuildStatusDialog.cs" />
     <Compile Include="Dialogs\Configuration\HelpDialog.cs" />
     <Compile Include="Dialogs\Configuration\ResetUserDataDialog.cs" />
     <Compile Include="Dialogs\Configuration\WelcomeDialog.cs" />

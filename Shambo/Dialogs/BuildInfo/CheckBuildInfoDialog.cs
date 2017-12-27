@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.TeamFoundation.Build.WebApi;
 using Shambo.Model;
 using Shambo.Services;
 
@@ -12,78 +14,97 @@ namespace Shambo.Dialogs.BuildInfo
    {
       private readonly TfsAPIService tfsAPiService;
       private readonly ConnectionDetails connectionDetails;
+      private readonly string buildName;
+      private readonly string buildStatus;
+      private readonly int numberOfBuilds;
 
-      public CheckBuildInfoDialog(ConnectionDetails connectionDetails)
+      public CheckBuildInfoDialog(ConnectionDetails connectionDetails, string buildName, string buildStatus, int numberOfBuilds)
       {
          tfsAPiService = new TfsAPIService();
          this.connectionDetails = connectionDetails;
+         this.buildName = buildName;
+         this.buildStatus = buildStatus;
+         this.numberOfBuilds = numberOfBuilds;
       }
 
       public async Task StartAsync(IDialogContext context)
       {
-         await DisplayDialogHelp(context);
-      }
+         var builds = await GetBuildsByDefinitionName();
 
-      private Task DisplayDialogHelp(IDialogContext context)
-      {
-         var promptOptions = new List<string> { "showLatestStatus", "getBuilds", "isRunning", "help", "back" };
-
-         PromptDialog.Choice(
-            context,
-            MessageReceived,
-            promptOptions,
-            "What can I do for you?");
-
-         return Task.CompletedTask;
-      }
-
-      private async Task MessageReceived(IDialogContext context, IAwaitable<string> result)
-      {
-         var text = await result;
-
-         switch (text)
+         if (!builds.Any())
          {
-            case "showLatestStatus":
-               context.Call(new ShowLatestStatusDialog(tfsAPiService, connectionDetails), AfterBuildInfoCheckWasExecuted);
+            await context.PostAsync($"Could not find any builds for the specified definition \"{buildName}\"");
+            context.Done((object)null);
+         }
+         else
+         {
+            builds = FilterBuildsByStatus(builds);
+
+            if (!builds.Any())
+            {
+               await context.PostAsync($"Could not find any builds with the status \"{buildStatus}\"");
+               context.Done((object)null);
+            }
+            else
+            {
+               builds = builds.Take(numberOfBuilds);
+
+               if (builds.Count() < numberOfBuilds)
+               {
+                  await context.PostAsync($"Could not find more than {builds.Count()} builds - will display them");
+               }
+
+               context.Call(new ShowBuildStatusDialog(tfsAPiService, connectionDetails, builds.Select(b => b.Id).ToList()), AfterBuildInfoCheckWasExecuted);
+            }
+         }
+      }
+
+      private async Task<IEnumerable<Build>> GetBuildsByDefinitionName()
+      {
+         IEnumerable<Build> builds = null;
+
+         if (string.IsNullOrEmpty(buildName) || buildName == "any")
+         {
+            /*We don't know the build definition name - let's try for all the build definitions then...*/
+            builds = (await tfsAPiService.GetBuildsByDefinitionAsync(connectionDetails, string.Empty))
+               .OrderByDescending(b => b.FinishTime);
+         }
+         else
+         {
+            // We know the build definition, so let's filter by name.
+            builds = (await tfsAPiService.GetBuildsByDefinitionAsync(connectionDetails, buildName))
+               .OrderByDescending(b => b.FinishTime);
+         }
+
+         return builds;
+      }
+
+      private IEnumerable<Build> FilterBuildsByStatus(IEnumerable<Build> builds)
+      {
+         switch (buildStatus)
+         {
+            case "Successful":
+               builds = builds.Where(b => b.Status == BuildStatus.Completed && b.Result == BuildResult.Succeeded);
                break;
-            case "getBuilds":
-               /* TODO */
+            case "Failing":
+               builds = builds.Where(b => b.Status == BuildStatus.Completed && b.Result == BuildResult.Failed);
                break;
-            case "isRunning":
-               /* TODO */
+            case "Running":
+               builds = builds.Where(b => b.Status == BuildStatus.InProgress);
                break;
-            case "exit":
-               context.Done(result);
-               break;
-            case "help":
             default:
-               await DisplayDialogHelp(context);
+               // If we don't have a status, just check the completed ones...
+               builds = builds.Where(b => b.Status == BuildStatus.Completed);
                break;
          }
+
+         return builds;
       }
 
       private Task AfterBuildInfoCheckWasExecuted(IDialogContext context, IAwaitable<object> result)
       {
-         PromptDialog.Confirm(
-            context,
-            AfterCheckIfShouldContinue,
-            "Do you want to fetch more build infos?");
-
+         context.Done((object)null);
          return Task.CompletedTask;
-      }
-
-      private async Task AfterCheckIfShouldContinue(IDialogContext context, IAwaitable<bool> awaitableResult)
-      {
-         var result = await awaitableResult;
-
-         if (result)
-         {
-            await DisplayDialogHelp(context);
-         }
-         else
-         {
-            context.Done(result);
-         }
       }
    }
 }

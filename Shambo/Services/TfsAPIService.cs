@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using Shambo.Model;
@@ -17,16 +16,35 @@ namespace Shambo.Services
       {
          var buildClient = GetClient<BuildHttpClient>(connectionDetails);
 
-         var buildDefinition = (await buildClient.GetDefinitionsAsync(connectionDetails.TeamProject, name: buildDefinitionName)).SingleOrDefault();
+         IEnumerable<BuildDefinitionReference> definitionsToCheck = await buildClient.GetDefinitionsAsync(project: connectionDetails.TeamProject);
 
-         if (buildDefinition == null)
+         if (!string.IsNullOrEmpty(buildDefinitionName))
+         {
+            definitionsToCheck = definitionsToCheck.Where(d => d.Name.ToLower().Contains(buildDefinitionName.ToLower()));
+         }
+
+         if (!definitionsToCheck.Any())
          {
             return Enumerable.Empty<Build>();
          }
 
-         var builds = (await buildClient.GetBuildsAsync(connectionDetails.TeamProject, new[] { buildDefinition.Id }));
+         var builds = new List<Build>();
+
+         foreach (var definition in definitionsToCheck)
+         {
+            var buildsForDefinition = (await buildClient.GetBuildsAsync(connectionDetails.TeamProject, new[] { definition.Id }));
+            builds.AddRange(buildsForDefinition);
+         }
 
          return builds;
+      }
+
+      public async Task<Build> GetBuildById(ConnectionDetails connectionDetails, int buildId)
+      {
+         var buildClient = GetClient<BuildHttpClient>(connectionDetails);
+
+         var build = await buildClient.GetBuildAsync(buildId);
+         return build;
       }
 
       public async Task<BuildBadge> GetBuildBadgeAsync(ConnectionDetails connectionDetails, Build build)
