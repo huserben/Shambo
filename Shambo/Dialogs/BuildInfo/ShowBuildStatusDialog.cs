@@ -14,12 +14,12 @@ namespace Shambo.Dialogs.BuildInfo
    [Serializable]
    public class ShowBuildStatusDialog : IDialog<object>
    {
-      private readonly TfsAPIService tfsAPIService;
+      private readonly ITfsAPIService tfsAPIService;
       private readonly ConnectionDetails connectionDetails;
       private readonly IEnumerable<int> buildIds;
       private int buildIdToCheck;
 
-      public ShowBuildStatusDialog(TfsAPIService tfsAPIService, ConnectionDetails connectionDetails, IEnumerable<int> buildIds)
+      public ShowBuildStatusDialog(ITfsAPIService tfsAPIService, ConnectionDetails connectionDetails, IEnumerable<int> buildIds)
       {
          this.tfsAPIService = tfsAPIService;
          this.connectionDetails = connectionDetails;

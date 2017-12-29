@@ -12,16 +12,16 @@ namespace Shambo.Dialogs.BuildInfo
    [Serializable]
    public class CheckBuildInfoDialog : IDialog<object>
    {
-      private readonly TfsAPIService tfsAPiService;
       private readonly ConnectionDetails connectionDetails;
+      private readonly ITfsAPIService tfsApiService;
       private readonly string buildName;
       private readonly string buildStatus;
       private readonly int numberOfBuilds;
 
-      public CheckBuildInfoDialog(ConnectionDetails connectionDetails, string buildName, string buildStatus, int numberOfBuilds)
+      public CheckBuildInfoDialog(ConnectionDetails connectionDetails, ITfsAPIService tfsApiService, string buildName, string buildStatus, int numberOfBuilds)
       {
-         tfsAPiService = new TfsAPIService();
          this.connectionDetails = connectionDetails;
+         this.tfsApiService = tfsApiService;
          this.buildName = buildName;
          this.buildStatus = buildStatus;
          this.numberOfBuilds = numberOfBuilds;
@@ -54,7 +54,7 @@ namespace Shambo.Dialogs.BuildInfo
                   await context.PostAsync($"Could not find more than {builds.Count()} builds - will display them");
                }
 
-               context.Call(new ShowBuildStatusDialog(tfsAPiService, connectionDetails, builds.Select(b => b.Id).ToList()), AfterBuildInfoCheckWasExecuted);
+               context.Call(new ShowBuildStatusDialog(tfsApiService, connectionDetails, builds.Select(b => b.Id).ToList()), AfterBuildInfoCheckWasExecuted);
             }
          }
       }
@@ -66,13 +66,13 @@ namespace Shambo.Dialogs.BuildInfo
          if (string.IsNullOrEmpty(buildName) || buildName == "any")
          {
             /*We don't know the build definition name - let's try for all the build definitions then...*/
-            builds = (await tfsAPiService.GetBuildsByDefinitionAsync(connectionDetails, string.Empty))
+            builds = (await tfsApiService.GetBuildsByDefinitionAsync(connectionDetails, string.Empty))
                .OrderByDescending(b => b.FinishTime);
          }
          else
          {
             // We know the build definition, so let's filter by name.
-            builds = (await tfsAPiService.GetBuildsByDefinitionAsync(connectionDetails, buildName))
+            builds = (await tfsApiService.GetBuildsByDefinitionAsync(connectionDetails, buildName))
                .OrderByDescending(b => b.FinishTime);
          }
 

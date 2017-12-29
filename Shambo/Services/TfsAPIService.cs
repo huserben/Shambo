@@ -10,7 +10,7 @@ using Shambo.Model;
 namespace Shambo.Services
 {
    [Serializable]
-   public class TfsAPIService
+   public class TfsAPIService : ITfsAPIService
    {
       public async Task<IEnumerable<Build>> GetBuildsByDefinitionAsync(ConnectionDetails connectionDetails, string buildDefinitionName)
       {

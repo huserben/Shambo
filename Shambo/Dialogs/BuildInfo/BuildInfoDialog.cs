@@ -14,10 +14,10 @@ namespace Shambo.Dialogs.BuildInfo
    public class BuildInfoDialog : IDialog<object>
    {
       private readonly int buildId;
-      private readonly TfsAPIService tfsApiService;
+      private readonly ITfsAPIService tfsApiService;
       private readonly ConnectionDetails connectionDetails;
 
-      public BuildInfoDialog(int buildId, TfsAPIService tfsApiService, ConnectionDetails connectionDetails)
+      public BuildInfoDialog(int buildId, ITfsAPIService tfsApiService, ConnectionDetails connectionDetails)
       {
          this.buildId = buildId;
          this.tfsApiService = tfsApiService;

@@ -134,6 +134,7 @@ namespace Shambo.Dialogs
 
          context.Call(new CheckBuildInfoDialog(
             Conversation.Container.GetDataService().GetConnectionDetails(),
+            Conversation.Container.GetTfsApiService(),
             buildName,
             buildState,
             numberOfBuilds),

@@ -9,5 +9,10 @@ namespace Shambo.Helpers
       {
          return container.Resolve<IDataService>();
       }
+
+      public static ITfsAPIService GetTfsApiService(this IContainer container)
+      {
+         return container.Resolve<ITfsAPIService>();
+      }
    }
 }

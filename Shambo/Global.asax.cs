@@ -34,6 +34,7 @@ namespace Shambo
                          .InstancePerLifetimeScope();
               
               builder.RegisterType<EntityFrameworkDataService>().As<IDataService>().SingleInstance();
+              builder.RegisterType<TfsAPIService>().As<ITfsAPIService>().SingleInstance();
            });
       }
    }

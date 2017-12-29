@@ -30,7 +30,7 @@ namespace Shambo
          return response;
       }
 
-      private async Task HandleSystemMessage(Activity message)
+      private Task HandleSystemMessage(Activity message)
       {
          if (message.Type == ActivityTypes.DeleteUserData)
          {
@@ -55,6 +55,8 @@ namespace Shambo
          else if (message.Type == ActivityTypes.Ping)
          {
          }
+
+         return Task.CompletedTask;
       }
    }
 }
