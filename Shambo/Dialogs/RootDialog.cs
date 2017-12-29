@@ -52,7 +52,7 @@ namespace Shambo.Dialogs
          }
          else
          {
-            await OfferServices(context, null);
+            context.Wait(MessageReceived);
          }
       }
 
@@ -63,8 +63,7 @@ namespace Shambo.Dialogs
          if (connectionDetails != null)
          {
             Conversation.Container.GetDataService().StoreConnectionDetails(connectionDetails);
-
-            await OfferServices(context, null);
+            context.Wait(MessageReceived);
          }
          else
          {
@@ -86,15 +85,15 @@ namespace Shambo.Dialogs
          }
       }
 
-      private async Task OfferServices(IDialogContext context, IAwaitable<object> result)
+      [LuisIntent("Greeting")]
+      private async Task AfterGreetingMessageReceived(IDialogContext context, LuisResult result)
       {
-         await context.PostAsync($"Hi how can I be of service?");
-
-         //context.Wait(ConversationStarted);
+         await context.PostAsync("Hello there, how can I be of your service? :-)");
          context.Wait(MessageReceived);
       }
 
       [LuisIntent("None")]
+      [LuisIntent("")]
       private async Task AfterUnknownMessageReceived(IDialogContext context, LuisResult result)
       {
          await context.PostAsync("Sorry, I don't understand what you mean. Wanna try again?");

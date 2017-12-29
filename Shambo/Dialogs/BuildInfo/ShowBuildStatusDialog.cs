@@ -69,8 +69,8 @@ namespace Shambo.Dialogs.BuildInfo
          {
             Title = $"Build Info: {build.BuildNumber}",
             Subtitle = $"State: {build.Result.ToString()}",
-            Buttons = new[] { cardButton },
-            Images = new[] { cardImage }
+            Buttons = new[] { cardButton }
+            //Images = new[] { cardImage }
          };
 
          var attachment = heroCard.ToAttachment();
