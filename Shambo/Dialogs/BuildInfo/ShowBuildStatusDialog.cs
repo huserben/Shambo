@@ -76,7 +76,6 @@ namespace Shambo.Dialogs.BuildInfo
          var attachment = heroCard.ToAttachment();
          var message = context.MakeMessage();
          message.Attachments.Add(attachment);
-         message.Text = $"The status of the last {build.Definition.Name} build is: {build.Result.ToString()}";
 
          await context.PostAsync(message);
       }

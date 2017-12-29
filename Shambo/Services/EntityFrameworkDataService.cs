@@ -58,5 +58,19 @@ namespace Shambo.Services
          botConfig.Subscriptions.Add(newSubscription);
          db.SaveChanges();
       }
+
+      public void ClearData()
+      {
+         db.Entry(botConfig.ConnectionDetails).State = EntityState.Modified;
+         botConfig.ConnectionDetails.Clear();
+
+         foreach (var subscription in botConfig.Subscriptions.ToList())
+         {
+            db.Entry(subscription).State = EntityState.Deleted;
+            botConfig.Subscriptions.Remove(subscription);
+         }
+
+         db.SaveChanges();
+      }
    }
 }

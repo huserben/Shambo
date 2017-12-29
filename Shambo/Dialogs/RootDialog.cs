@@ -63,6 +63,7 @@ namespace Shambo.Dialogs
          if (connectionDetails != null)
          {
             Conversation.Container.GetDataService().StoreConnectionDetails(connectionDetails);
+            await context.PostAsync("Ok thanks, now we're ready to go. How can I help?");
             context.Wait(MessageReceived);
          }
          else
@@ -142,8 +143,7 @@ namespace Shambo.Dialogs
          return Task.CompletedTask;
       }
 
-      /*TODO: Add intent*/
-      [LuisIntent("Reset")]
+      [LuisIntent("ResetData")]
       private Task AfterResetMessageReceived(IDialogContext context, LuisResult result)
       {
          context.Call(new ResetUserDataDialog(), AfterResetUserData);
@@ -158,7 +158,6 @@ namespace Shambo.Dialogs
          return Task.CompletedTask;
       }
 
-      /*TODO: Add intent*/
       [LuisIntent("Subscription.Add")]
       private Task AfterAddSubscriptionMessageReceived(IDialogContext context, LuisResult result)
       {

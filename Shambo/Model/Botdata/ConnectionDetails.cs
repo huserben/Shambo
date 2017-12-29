@@ -37,5 +37,13 @@ namespace Shambo.Model
             .AddRemainingFields(new[] { nameof(Id) })
             .Build();
       }
+
+      public void Clear()
+      {
+         TfsUrl = string.Empty;
+         TeamProject = string.Empty;
+         RepositoryType = null;
+         PersonalAccessToken = string.Empty;
+      }
    }
 }

@@ -10,7 +10,6 @@ using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Dialogs.Internals;
 using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
-using Shambo.Dialogs.BuildInfo;
 using Shambo.Dialogs.Notifications;
 using Shambo.Model.WebHooks;
 using Shambo.Services;
@@ -50,11 +49,10 @@ namespace Shambo.Controllers
                var task = scope.Resolve<IDialogTask>();
                var stack = scope.Resolve<IDialogStack>();
 
-               // Create the new dialog and add it to the stack.
-               var dialog = new BuildEventNotificationDialog(buildCompletedEvent);
-
                if (stack.Frames.Count > 0)
                {
+                  // Create the new dialog and add it to the stack.
+                  var dialog = new BuildEventNotificationDialog(buildCompletedEvent);
                   task.Call(dialog.Void<object, IMessageActivity>(), null);
                   await task.PollAsync(CancellationToken.None);
 

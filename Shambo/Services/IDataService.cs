@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Bot.Builder.Dialogs;
 using Shambo.Model;
 
 namespace Shambo.Services
@@ -14,5 +12,7 @@ namespace Shambo.Services
       void AddSubscription(Subscription newSubscription);
 
       IEnumerable<Subscription> GetSubscriptions();
+
+      void ClearData();
    }
 }
