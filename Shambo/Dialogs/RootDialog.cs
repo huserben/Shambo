@@ -78,10 +78,6 @@ namespace Shambo.Dialogs
 
          if (newSubscription != null)
          {
-            var message = context.MakeMessage();
-            var conversationReference = message.ToConversationReference();
-            newSubscription.ConversationReference = JsonConvert.SerializeObject(conversationReference);
-
             Conversation.Container.GetDataService().AddSubscription(newSubscription);
          }
       }
@@ -112,26 +108,7 @@ namespace Shambo.Dialogs
       [LuisIntent("Build.CheckStatus")]
       private Task AfterCheckBuildStateMessageReceived(IDialogContext context, LuisResult result)
       {
-         var buildName = string.Empty;
-         var buildState = string.Empty;
-         var numberOfBuilds = 1;
-
-         if (result.TryFindEntity("BuildName", out var buildNameEntity))
-         {
-            buildName = buildNameEntity.Entity;
-            /*Todo: handle "any" etc.*/
-         }
-
-         if (result.TryFindEntity("BuildState", out var buildStateEntity))
-         {
-            var values = (List<object>)buildStateEntity.Resolution["values"];
-            buildState = values.Single().ToString();
-         }
-
-         if (result.TryFindEntity("builtin.number", out var numberEntity))
-         {
-            int.TryParse(numberEntity.Entity, out numberOfBuilds);
-         }
+         ExtractEntitiesFromLuisResult(result, out var buildName, out var buildState, out var numberOfBuilds);
 
          context.Call(new CheckBuildInfoDialog(
             Conversation.Container.GetDataService().GetConnectionDetails(),
@@ -161,7 +138,17 @@ namespace Shambo.Dialogs
       [LuisIntent("Subscription.Add")]
       private Task AfterAddSubscriptionMessageReceived(IDialogContext context, LuisResult result)
       {
-         context.Call(FormDialog.FromForm(Subscription.BuildForm), AfterSubscriptionSetup);
+         var subscription = new Subscription();
+         var message = context.MakeMessage();
+         var conversationReference = message.ToConversationReference();
+         subscription.ConversationReference = JsonConvert.SerializeObject(conversationReference);
+
+         ExtractEntitiesFromLuisResult(result, out var buildName, out var buildState, out var _);
+         subscription.BuildDefinitionNames = buildName;
+         subscription.BuildStates = buildState;
+         
+         var formDialog = new FormDialog<Subscription>(subscription, Subscription.BuildForm, FormOptions.PromptInStart);
+         context.Call(formDialog, AfterSubscriptionSetup);
          return Task.CompletedTask;
       }
 
@@ -175,6 +162,38 @@ namespace Shambo.Dialogs
       {
          await context.PostAsync("User data has been deleted, time to make a fresh start.");
          await StartAsync(context);
+      }
+
+      private void ExtractEntitiesFromLuisResult(LuisResult result, out string buildName, out string buildState, out int numberOfBuilds)
+      {
+         if (result.TryFindEntity("BuildName", out var buildNameEntity))
+         {
+            buildName = buildNameEntity.Entity;
+            /*Todo: handle "any" etc.*/
+         }
+         else
+         {
+            buildName = string.Empty;
+         }
+
+         if (result.TryFindEntity("BuildState", out var buildStateEntity))
+         {
+            var values = (List<object>)buildStateEntity.Resolution["values"];
+            buildState = values.Single().ToString();
+         }
+         else
+         {
+            buildState = string.Empty;
+         }
+
+         if (result.TryFindEntity("builtin.number", out var numberEntity))
+         {
+            int.TryParse(numberEntity.Entity, out numberOfBuilds);
+         }
+         else
+         {
+            numberOfBuilds = 1;
+         }
       }
    }
 }

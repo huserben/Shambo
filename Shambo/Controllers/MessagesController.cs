@@ -2,10 +2,8 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
-using Autofac;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
-using Shambo.Services;
 
 namespace Shambo
 {

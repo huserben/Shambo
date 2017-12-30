@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using Microsoft.Bot.Builder.FormFlow;
 
 namespace Shambo.Model
@@ -32,9 +33,22 @@ namespace Shambo.Model
 
       public static IForm<ConnectionDetails> BuildForm()
       {
+         var stringBuilder = new StringBuilder();
+         stringBuilder.Append($"• TfsUrl: {{{nameof(TfsUrl)}}}{Environment.NewLine}{Environment.NewLine}");
+         stringBuilder.Append($"• TeamProject: {{{nameof(TeamProject)}}}{Environment.NewLine}{Environment.NewLine}");
+         stringBuilder.Append($"• PersonalAccessToken: {{{nameof(PersonalAccessToken)}}}{Environment.NewLine}{Environment.NewLine}");
+         stringBuilder.Append($"• RepositoryType: {{{nameof(RepositoryType)}}}{Environment.NewLine}{Environment.NewLine}");
+         stringBuilder.Append($"{Environment.NewLine}{Environment.NewLine}");
+         stringBuilder.Append($"{Environment.NewLine}{Environment.NewLine}");
+         stringBuilder.Append("Is your configuration ok like this?");
+
          /*Validation if URL exists (ping) and PAT is correct?*/
          return new FormBuilder<ConnectionDetails>()
-            .AddRemainingFields(new[] { nameof(Id) })
+            .Field(nameof(TfsUrl))
+            .Field(nameof(TeamProject))
+            .Field(nameof(PersonalAccessToken))
+            .Field(nameof(RepositoryType))
+            .Confirm(stringBuilder.ToString())
             .Build();
       }
 
