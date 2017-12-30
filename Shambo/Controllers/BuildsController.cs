@@ -76,7 +76,7 @@ namespace Shambo.Controllers
             return false;
          }
 
-         if (subscription.BuildState != "Any" && !subscription.BuildState.Select(x => x.ToString()).Contains(result))
+         if (subscription.BuildState != "None" && subscription.BuildState != string.Empty && subscription.BuildState.ToLower() != result.ToLower())
          {
             return false;
          }
