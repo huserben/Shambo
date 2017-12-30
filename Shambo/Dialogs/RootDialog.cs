@@ -13,16 +13,20 @@ using Newtonsoft.Json;
 using Shambo.Dialogs.BuildInfo;
 using Shambo.Helpers;
 using Shambo.Model;
+using Shambo.Services;
 
 namespace Shambo.Dialogs
 {
    [Serializable]
    public class RootDialog : LuisDialog<object>
    {
+      private readonly ITfsAPIService tfsAPIService;
+
       public RootDialog() : base(new LuisService(new LuisModelAttribute(
          ConfigurationManager.AppSettings["LuisAppId"],
          ConfigurationManager.AppSettings["LuisAPIKey"])))
       {
+         tfsAPIService = Conversation.Container.GetTfsApiService();
       }
 
       public override async Task StartAsync(IDialogContext context)
@@ -36,7 +40,7 @@ namespace Shambo.Dialogs
             await CheckConfiguration(context);
          }
       }
-      
+
       private async Task AfterWelcomeDialog(IDialogContext context, IAwaitable<object> result)
       {
          await CheckConfiguration(context);
@@ -79,6 +83,8 @@ namespace Shambo.Dialogs
          if (newSubscription != null)
          {
             Conversation.Container.GetDataService().AddSubscription(newSubscription);
+
+            await context.PostAsync("Allright, I added it to the configuration.");
          }
       }
 
@@ -136,7 +142,7 @@ namespace Shambo.Dialogs
       }
 
       [LuisIntent("Subscription.Add")]
-      private Task AfterAddSubscriptionMessageReceived(IDialogContext context, LuisResult result)
+      private async Task AfterAddSubscriptionMessageReceived(IDialogContext context, LuisResult result)
       {
          var subscription = new Subscription();
          var message = context.MakeMessage();
@@ -144,12 +150,18 @@ namespace Shambo.Dialogs
          subscription.ConversationReference = JsonConvert.SerializeObject(conversationReference);
 
          ExtractEntitiesFromLuisResult(result, out var buildName, out var buildState, out var _);
-         subscription.BuildDefinitionNames = buildName;
-         subscription.BuildStates = buildState;
+
+         var availableBuildDefinitions = await Subscription.PossibleBuildDefinitions;
+         var matchingBuildDefinition = availableBuildDefinitions.SingleOrDefault(bd => bd.ToLower() == buildName.ToLower());
+         if (matchingBuildDefinition != null)
+         {
+            subscription.BuildDefinitionName = matchingBuildDefinition;
+         }
          
+         subscription.BuildState = BuildStateToBuildResult(buildState);
+
          var formDialog = new FormDialog<Subscription>(subscription, Subscription.BuildForm, FormOptions.PromptInStart);
          context.Call(formDialog, AfterSubscriptionSetup);
-         return Task.CompletedTask;
       }
 
       private Task AfterHelpDialog(IDialogContext context, IAwaitable<object> result)
@@ -193,6 +205,29 @@ namespace Shambo.Dialogs
          else
          {
             numberOfBuilds = 1;
+         }
+      }
+
+      /// <summary>
+      ///  Transforms build state from LUIS to build result as defined by Enum
+      /// </summary>
+      /// <param name="buildState">Build state fetched from LUIS</param>
+      /// <returns>BuildResult enum matching counterpart</returns>
+      private string BuildStateToBuildResult(string buildState)
+      {
+         switch (buildState)
+         {
+            case "Canceled":
+            case "":
+               return buildState;
+            case "Partially Succeeded":
+               return "PartiallySucceeded";
+            case "Failing":
+               return "Failed";
+            case "Successful":
+               return "Succeeded";
+            default:
+               return "None";
          }
       }
    }

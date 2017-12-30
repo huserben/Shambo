@@ -71,12 +71,12 @@ namespace Shambo.Controllers
          var buildDefinition = buildCompletedEvent.Resource.Definition.Name;
          var result = buildCompletedEvent.Resource.Status;
 
-         if (subscription.BuildDefinitionNames != "*" && !subscription.BuildDefinitionNames.Contains(buildDefinition))
+         if (subscription.BuildDefinitionName != "*" && !subscription.BuildDefinitionName.Contains(buildDefinition))
          {
             return false;
          }
 
-         if (subscription.BuildStates != "Any" && !subscription.BuildStates.Select(x => x.ToString()).Contains(result))
+         if (subscription.BuildState != "Any" && !subscription.BuildState.Select(x => x.ToString()).Contains(result))
          {
             return false;
          }

@@ -73,6 +73,15 @@ namespace Shambo.Services
          return changes;
       }
 
+      public async Task<IEnumerable<string>> GetBuildDefinitionsAsync(ConnectionDetails connectionDetails)
+      {
+         var buildClient = GetClient<BuildHttpClient>(connectionDetails);
+
+         IEnumerable<BuildDefinitionReference> definitionsToCheck = await buildClient.GetDefinitionsAsync(project: connectionDetails.TeamProject);
+
+         return definitionsToCheck.Select(x => x.Name).ToList();
+      }
+
       private T GetClient<T>(ConnectionDetails connectionDetails) where T : VssHttpClientBase
       {
          var federatedCreds = new VssBasicCredential("", connectionDetails.PersonalAccessToken);

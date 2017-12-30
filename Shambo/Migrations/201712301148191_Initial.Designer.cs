@@ -13,7 +13,7 @@ namespace Shambo.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "201712221250246_Initial"; }
+            get { return "201712301148191_Initial"; }
         }
         
         string IMigrationMetadata.Source

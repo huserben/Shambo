@@ -222,9 +222,9 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\ContainerExtensions.cs" />
-    <Compile Include="Migrations\201712221250246_Initial.cs" />
-    <Compile Include="Migrations\201712221250246_Initial.Designer.cs">
-      <DependentUpon>201712221250246_Initial.cs</DependentUpon>
+    <Compile Include="Migrations\201712301148191_Initial.cs" />
+    <Compile Include="Migrations\201712301148191_Initial.Designer.cs">
+      <DependentUpon>201712301148191_Initial.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Model\Database\BotConfigContext.cs" />
@@ -258,8 +258,8 @@
     <Folder Include="App_Data\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201712221250246_Initial.resx">
-      <DependentUpon>201712221250246_Initial.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201712301148191_Initial.resx">
+      <DependentUpon>201712301148191_Initial.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
